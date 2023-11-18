@@ -1,6 +1,6 @@
 
 cmake_minimum_required(VERSION 3.24.0)
-project(eduPro VERSION 0.1 LANGUAGES CXX)
+project(translate VERSION 0.1 LANGUAGES CXX)
 
 
 set(CMAKE_AUTOUIC ON)
