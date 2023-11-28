@@ -5,6 +5,7 @@
 #include <QWidget>
 #include <map>
 #include <vector>
+#include "../../core/UMessage.h"
 
 class QPushButton;
 class CMessageWnd;
@@ -17,28 +18,19 @@ class CCenterWnd:public QWidget
 public:
     CCenterWnd(QWidget *parent = nullptr);
     ~CCenterWnd(){}  
-    void slotRolesName(const QStringList roleNames);
-
-signals:
-    void signAddGptRole(const QString&  roleName,const QString&  sysTemPrompt,const QString&  temp);
-    void signAskGpt(const QString& roleName,const QString& modelName,const QString& userPrompt);
-    void signOaiReply(const QString& text);
-
     
+    void slotCreateWnd(const QString& name,QStringList datas);
+signals:
+    // void signAddRole(const QString& name,const QString& systemPrompt,const QString& temperature,bool isAssistant);
+    // void signAskGpt(const QString& roleName,const QString& modelName,const QString& userPrompt);
+    // void signOaiReply(const QString& text,size_t index);
+
+
 private:   
-
-
     void menuBtnClicked();
+    void createMenuWnd();
 
-    void setMenuWnd();
-    void setGptWnd(); 
-    void setEnglishWnd();
-    void setVideoWnd();    
-    void setTaskWnd();
-    void setSettingWnd();
-    void setUserWnd();
-
-
+    QHBoxLayout * hLayout_;
     QWidget * leftMenuWnd_{};
     QWidget * rightWnd_{};
     std::vector<CImgButton*> menuBtns_;

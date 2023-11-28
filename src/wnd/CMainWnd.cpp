@@ -5,16 +5,14 @@
 #include "components/CStatusWnd.h"
 #include "components/CCenterWnd.h"
 
-CMainWnd::CMainWnd(QWidget * parent):CMoveFramelessWnd(parent)
+CMainWnd::CMainWnd(QWidget * parent):CMoveFramelessWnd(parent),
+    statusWnd_(new CStatusWnd(this)),centerWnd_(new CCenterWnd(this)),titleWnd_(new CTitileWnd(this))
 {
     setWindowIcon(QIcon("./images/chatGPT.png"));
 
     QVBoxLayout *layout = new QVBoxLayout(this);
     layout->setContentsMargins(1,1,1,1);
-    layout->setSpacing(0);
-    titleWnd_ = new CTitileWnd(this);
-    statusWnd_ = new CStatusWnd(this);
-    centerWnd_ = new CCenterWnd(this);
+    layout->setSpacing(0);  
     statusWnd_->setMouseTracking(true);
     centerWnd_->setMouseTracking(true);
     titleWnd_->setMouseTracking(true);
@@ -23,15 +21,21 @@ CMainWnd::CMainWnd(QWidget * parent):CMoveFramelessWnd(parent)
     layout->addWidget(statusWnd_);
     layout->setStretch(1,1);
 
-    // setStyleSheet("border-radius: 5;");
-    resize(1100,1000);
-    connect(dynamic_cast<CTitileWnd*>(titleWnd_),&CTitileWnd::signCloseWnd,this,&CMainWnd::close);
-    connect(dynamic_cast<CTitileWnd*>(titleWnd_),&CTitileWnd::signMinWnd,this,&CMainWnd::showMinimized);
-    connect(dynamic_cast<CCenterWnd*>(centerWnd_),&CCenterWnd::signAskGpt,this,&CMainWnd::signAskGpt);
-    connect(this,&CMainWnd::signOaiReply,dynamic_cast<CCenterWnd*>(centerWnd_),&CCenterWnd::signOaiReply);
-    }
 
-    void CMainWnd::slotRolesName(const QStringList &roleNames)
-    {
-        dynamic_cast<CCenterWnd*>(centerWnd_)->slotRolesName(roleNames);
-    }
+    resize(900,1000);
+    connect(titleWnd_,&CTitileWnd::signCloseWnd,this,&CMainWnd::close);
+    connect(titleWnd_,&CTitileWnd::signMinWnd,this,&CMainWnd::showMinimized);
+
+    connect(this,&CMainWnd::signDataForWnd,centerWnd_,&CCenterWnd::slotCreateWnd);
+    connect(this,&CMainWnd::signStatusText,statusWnd_,&CStatusWnd::setLeftText);
+  
+
+}
+
+CMainWnd *CMainWnd::getInstance()
+{
+    static CMainWnd instance =  CMainWnd();
+    return &instance;
+}
+
+

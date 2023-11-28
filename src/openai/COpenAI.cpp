@@ -13,21 +13,11 @@ COpenAI::COpenAI(const QString& baseUrl,const QString& apiKey, QObject *parent):
 }
 
 void COpenAI::slotResponse(QNetworkReply *reply)
-{
+{	
 	QByteArray responseData = reply->readAll();
 	QVariant statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
-	int httpStatusCode = statusCode.toInt();
-	if(httpStatusCode != 200){
-		responseData.append("\n");
-		responseData.append(QString::number(httpStatusCode).toUtf8());
-		emit sigOaiReply(responseData);
-		return;
-	}
-	auto root =  QJsonDocument::fromJson(responseData).object();
-	auto res = root["choices"][0]["message"]["content"].toString();	
-	 	
-    reply->deleteLater();    	
-	emit sigOaiReply(res);
+	reply->deleteLater();    	
+	emit sigOaiReply(responseData,statusCode.toInt());
 }
 
 void COpenAI::chat(const QByteArray &jsonBody) const & noexcept(false)
@@ -40,6 +30,7 @@ void COpenAI::send(const QByteArray& jsonBody,const QString& url) const & noexce
 {
 	QNetworkRequest request((QUrl(url)));
 	request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+	request.setRawHeader("Authorization", ("Bearer "+apiKey_).toLocal8Bit());
     QNetworkReply *reply = networkManager_->post(request, jsonBody);    
 	
 }

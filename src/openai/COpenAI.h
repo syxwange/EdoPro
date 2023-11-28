@@ -29,7 +29,7 @@ class COpenAI final :public QObject
 	Q_OBJECT
 
 	public:
-		COpenAI(const QString& baseUrl="http://47.252.69.252:4567/v1", const QString&  apiKey="sk-xxxx", QObject *parent = nullptr);
+		COpenAI(const QString& baseUrl="http://47.252.69.252:8866/v1", const QString&  apiKey="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", QObject *parent = nullptr);
 		~COpenAI(){}
 		COpenAI(const COpenAI&,QObject *parent = nullptr) = delete;
 		COpenAI(COpenAI&&,QObject *parent = nullptr) = delete;
@@ -44,7 +44,7 @@ class COpenAI final :public QObject
 		void chat(const QByteArray& jsonBody) const & noexcept(false);
 
 	signals:
-		void sigOaiReply(const QString& res);
+		void sigOaiReply(const QString& res,int statusCode);
 
 	private:
 		QNetworkAccessManager * networkManager_ =  nullptr;	

@@ -63,6 +63,7 @@ void COpenAI::send(const QByteArray& jsonBody,const QString& url) const & noexce
 {
 	QNetworkRequest request((QUrl(url)));
 	request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+	request.setRawHeader("Authorization", apiKey_.toLocal8Bit());
     QNetworkReply *reply = networkManager_->post(request, jsonBody);    
 	
 }

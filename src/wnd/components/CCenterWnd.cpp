@@ -9,26 +9,27 @@
 #include <QDialog>
 #include <QInputDialog>
 #include "CGptWnd.h"
+#include "../CMainWnd.h"
+#include "CMultiGptWnd.h"
 //#7ab5d4   f8fcfe
 CCenterWnd::CCenterWnd(QWidget * parent):QWidget (parent)
 {
-    setMenuWnd();
-    setGptWnd();  
+    createMenuWnd();
+    // createGptWnd();  
 
-    QHBoxLayout * hLayout = new QHBoxLayout(this);
-    hLayout->setContentsMargins(0,0,0,0);  
-    hLayout->addWidget(leftMenuWnd_);
-    hLayout->addWidget(rightWnd_);    
-    hLayout->setSpacing(0); 
+    // 
+    hLayout_ = new QHBoxLayout(this);
+    hLayout_->setContentsMargins(0,0,0,0);  
+    hLayout_->addWidget(leftMenuWnd_);
+    // hLayout_->addWidget(rightWnd_);    
+    hLayout_->setSpacing(0); 
+
 
 }
 
-void CCenterWnd::slotRolesName(const QStringList roleNames)
-{
-    dynamic_cast<CGptWnd*>(rightWnd_)->slotRolesName(roleNames);
-}
 
-void CCenterWnd::setMenuWnd()
+
+void CCenterWnd::createMenuWnd()
 {
     leftMenuWnd_ = new QWidget(this);
     leftMenuWnd_->setMouseTracking(true);
@@ -57,13 +58,13 @@ void CCenterWnd::setMenuWnd()
     menuBtns_.push_back(task);
     menuBtns_.push_back(setting);
     menuBtns_.push_back(user);
-    connect(gpt,&CImgButton::clicked,this,&CCenterWnd::setGptWnd);
-    connect(english,&CImgButton::clicked,this,&CCenterWnd::setEnglishWnd);
-    connect(video,&CImgButton::clicked,this,&CCenterWnd::setVideoWnd);
-    connect(task,&CImgButton::clicked,this,&CCenterWnd::setTaskWnd);
-    connect(setting,&CImgButton::clicked,this,&CCenterWnd::setSettingWnd);
-    connect(user,&CImgButton::clicked,this,&CCenterWnd::setUserWnd);
-   
+    connect(gpt,&CImgButton::clicked,[this](){emit CMainWnd::getInstance()->signCreateWnd ("gpts");});
+    connect(english,&CImgButton::clicked,[this](){emit CMainWnd::getInstance()->signCreateWnd ("english");});
+    connect(video,&CImgButton::clicked,[this](){emit CMainWnd::getInstance()->signCreateWnd ("video");});
+    connect(task,&CImgButton::clicked,[this](){emit CMainWnd::getInstance()->signCreateWnd ("task");});
+    connect(setting,&CImgButton::clicked,[this](){emit CMainWnd::getInstance()->signCreateWnd ("setting");});
+    connect(user,&CImgButton::clicked,[this](){emit CMainWnd::getInstance()->signCreateWnd ("user");menuBtnClicked();});
+    
 
     connect(gpt,&CImgButton::clicked,this,&CCenterWnd::menuBtnClicked);
     connect(english,&CImgButton::clicked,this,&CCenterWnd::menuBtnClicked);
@@ -72,37 +73,47 @@ void CCenterWnd::setMenuWnd()
     connect(setting,&CImgButton::clicked,this,&CCenterWnd::menuBtnClicked);
     connect(user,&CImgButton::clicked,this,&CCenterWnd::menuBtnClicked);  
 
+
 }
 
-void CCenterWnd::setGptWnd()
-{    
-    auto gptWnd = new CGptWnd(this);   
-    connect(gptWnd,&CGptWnd::signAddGptRole,this,&CCenterWnd::signAddGptRole); 
-    connect(gptWnd,&CGptWnd::signAskGpt,this,&CCenterWnd::signAskGpt);
-    connect(this,&CCenterWnd::signOaiReply,gptWnd,&CGptWnd::slotOaiReply);
-    rightWnd_ = gptWnd;
-    
-}
 
-void CCenterWnd::setEnglishWnd()
+
+
+void CCenterWnd::slotCreateWnd(const QString &name, QStringList datas)
 {
+    if (name=="gpts")
+    {
+        auto gptWnd = new CGptWnd(this);   
+        connect(gptWnd,&CGptWnd::signAddRole,CMainWnd::getInstance(),&CMainWnd::signAddRole); 
+        connect(gptWnd,&CGptWnd::signAskGpt,CMainWnd::getInstance(),&CMainWnd::signAskGpt);
+        connect(CMainWnd::getInstance(),&CMainWnd::signOaiReply,gptWnd,&CGptWnd::slotOaiReply);   
+        hLayout_->addWidget(gptWnd); 
+        if (rightWnd_)
+        {
+            hLayout_->removeWidget(rightWnd_);       
+            rightWnd_->deleteLater(); 
+        }
+          
+        rightWnd_ = gptWnd;    
+        gptWnd->slotReset(datas);
+    }
+    else if (name=="video")
+    {   
+        auto videoWnd = new CMultiGptWnd(this);
+        connect(videoWnd,&CMultiGptWnd::signAddRole,CMainWnd::getInstance(),&CMainWnd::signAddRole); 
+        connect(videoWnd,&CMultiGptWnd::signMultiAskGpt,CMainWnd::getInstance(),&CMainWnd::signMultiAskGpt);  
+        connect(videoWnd,&CMultiGptWnd::signGetRoleInfo,CMainWnd::getInstance(),&CMainWnd::signGetRoleInfo);
+        connect(videoWnd,&CMultiGptWnd::signDelRole,CMainWnd::getInstance(),&CMainWnd::signDelRole);
+        connect(CMainWnd::getInstance(),&CMainWnd::signMultiOaiReply,videoWnd,&CMultiGptWnd::slotMultiOaiReply);
+        videoWnd->slotReset(datas); 
+        hLayout_->addWidget(videoWnd);
+        hLayout_->removeWidget(rightWnd_);       
+        rightWnd_->deleteLater(); 
+        rightWnd_ = videoWnd;
+    }
 }
 
-void CCenterWnd::setVideoWnd()
-{
-}
 
-void CCenterWnd::setTaskWnd()
-{
-}
-
-void CCenterWnd::setSettingWnd()
-{
-}
-
-void CCenterWnd::setUserWnd()
-{
-}
 
 
 void CCenterWnd::menuBtnClicked()
