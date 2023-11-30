@@ -8,28 +8,28 @@
 #include <QScrollBar>
 #include <QDialog>
 #include <QInputDialog>
-#include "CGptWnd.h"
 #include "../CMainWnd.h"
 #include "CMultiGptWnd.h"
+#include "../../CEduPro.h"
+#include <ranges>
 //#7ab5d4   f8fcfe
+
+
+
+
 CCenterWnd::CCenterWnd(QWidget * parent):QWidget (parent)
-{
-    createMenuWnd();
-    // createGptWnd();  
-
-    // 
+{     
     hLayout_ = new QHBoxLayout(this);
-    hLayout_->setContentsMargins(0,0,0,0);  
+    hLayout_->setContentsMargins(0,0,0,0); 
+    hLayout_->setSpacing(0);  
+    init();  
     hLayout_->addWidget(leftMenuWnd_);
-    // hLayout_->addWidget(rightWnd_);    
-    hLayout_->setSpacing(0); 
-
-
+    hLayout_->addWidget(rightWnd_);  
 }
 
 
 
-void CCenterWnd::createMenuWnd()
+void CCenterWnd::init()
 {
     leftMenuWnd_ = new QWidget(this);
     leftMenuWnd_->setMouseTracking(true);
@@ -57,73 +57,73 @@ void CCenterWnd::createMenuWnd()
     menuBtns_.push_back(video);
     menuBtns_.push_back(task);
     menuBtns_.push_back(setting);
-    menuBtns_.push_back(user);
-    connect(gpt,&CImgButton::clicked,[this](){emit CMainWnd::getInstance()->signCreateWnd ("gpts");});
-    connect(english,&CImgButton::clicked,[this](){emit CMainWnd::getInstance()->signCreateWnd ("english");});
-    connect(video,&CImgButton::clicked,[this](){emit CMainWnd::getInstance()->signCreateWnd ("video");});
-    connect(task,&CImgButton::clicked,[this](){emit CMainWnd::getInstance()->signCreateWnd ("task");});
-    connect(setting,&CImgButton::clicked,[this](){emit CMainWnd::getInstance()->signCreateWnd ("setting");});
-    connect(user,&CImgButton::clicked,[this](){emit CMainWnd::getInstance()->signCreateWnd ("user");menuBtnClicked();});
-    
+    menuBtns_.push_back(user);  
 
-    connect(gpt,&CImgButton::clicked,this,&CCenterWnd::menuBtnClicked);
-    connect(english,&CImgButton::clicked,this,&CCenterWnd::menuBtnClicked);
-    connect(video,&CImgButton::clicked,this,&CCenterWnd::menuBtnClicked);
-    connect(task,&CImgButton::clicked,this,&CCenterWnd::menuBtnClicked);
-    connect(setting,&CImgButton::clicked,this,&CCenterWnd::menuBtnClicked);
-    connect(user,&CImgButton::clicked,this,&CCenterWnd::menuBtnClicked);  
+    connect(gpt,&CImgButton::clicked,this,&CCenterWnd::gptsBtnClicked);
+    connect(english,&CImgButton::clicked,this,&CCenterWnd::englishBtnClicked);
+    connect(video,&CImgButton::clicked,this,&CCenterWnd::videoBtnClicked);
+    connect(task,&CImgButton::clicked,this,&CCenterWnd::taskBtnClicked);
 
-
+    gpt->click();
 }
 
-
-
-
-void CCenterWnd::slotCreateWnd(const QString &name, QStringList datas)
+void CCenterWnd::createGptWnd(const QString& name)
 {
-    if (name=="gpts")
-    {
-        auto gptWnd = new CGptWnd(this);   
-        connect(gptWnd,&CGptWnd::signAddRole,CMainWnd::getInstance(),&CMainWnd::signAddRole); 
-        connect(gptWnd,&CGptWnd::signAskGpt,CMainWnd::getInstance(),&CMainWnd::signAskGpt);
-        connect(CMainWnd::getInstance(),&CMainWnd::signOaiReply,gptWnd,&CGptWnd::slotOaiReply);   
-        hLayout_->addWidget(gptWnd); 
-        if (rightWnd_)
-        {
-            hLayout_->removeWidget(rightWnd_);       
-            rightWnd_->deleteLater(); 
-        }
-          
-        rightWnd_ = gptWnd;    
-        gptWnd->slotReset(datas);
-    }
-    else if (name=="video")
-    {   
-        auto videoWnd = new CMultiGptWnd(this);
-        connect(videoWnd,&CMultiGptWnd::signAddRole,CMainWnd::getInstance(),&CMainWnd::signAddRole); 
-        connect(videoWnd,&CMultiGptWnd::signMultiAskGpt,CMainWnd::getInstance(),&CMainWnd::signMultiAskGpt);  
-        connect(videoWnd,&CMultiGptWnd::signGetRoleInfo,CMainWnd::getInstance(),&CMainWnd::signGetRoleInfo);
-        connect(videoWnd,&CMultiGptWnd::signDelRole,CMainWnd::getInstance(),&CMainWnd::signDelRole);
-        connect(CMainWnd::getInstance(),&CMainWnd::signMultiOaiReply,videoWnd,&CMultiGptWnd::slotMultiOaiReply);
-        videoWnd->slotReset(datas); 
+    CEduPro::app()->saveMsgAsJson();
+    CEduPro::app()->messages_.clear();
+    CEduPro::app()->currentTheme_=name;
+    auto senderObj = dynamic_cast<CImgButton*>(sender());  
+    for (auto btn:menuBtns_|std::views::filter([&senderObj](auto  i){return i!=senderObj;}))
+        btn->slotSetUnClicked();
+    auto videoWnd = new CMultiGptWnd(this); 
+    videoWnd->initRoleBtn(name);
+    connect(CEduPro::app(),&CEduPro::signMultiOaiReply,videoWnd,&CMultiGptWnd::slotMultiOaiReply);
+    if (rightWnd_){
+        hLayout_->removeWidget(rightWnd_);
         hLayout_->addWidget(videoWnd);
-        hLayout_->removeWidget(rightWnd_);       
-        rightWnd_->deleteLater(); 
-        rightWnd_ = videoWnd;
+        rightWnd_->deleteLater();
     }
+    rightWnd_ = videoWnd;
 }
 
-
-
-
-void CCenterWnd::menuBtnClicked()
+void CCenterWnd::gptsBtnClicked()
 {
+    auto senderObj = dynamic_cast<CImgButton*>(sender());
+    btnClicked(senderObj);
+    createGptWnd("gpts");
+    emit CEduPro::app()->signStatusRightText("GPTs");
+
+}
+
+void CCenterWnd::videoBtnClicked()
+{
+    auto senderObj = dynamic_cast<CImgButton*>(sender());
+    btnClicked(senderObj);
+    createGptWnd("video");
+    emit CEduPro::app()->signStatusRightText("video");
+}
+
+void CCenterWnd::englishBtnClicked()
+{
+    auto senderObj = dynamic_cast<CImgButton*>(sender());
+    btnClicked(senderObj);
+    createGptWnd("english");
+    emit CEduPro::app()->signStatusRightText("english");
+}
+
+void CCenterWnd::taskBtnClicked()
+{
+    auto senderObj = dynamic_cast<CImgButton*>(sender());
+    btnClicked(senderObj);
+    createGptWnd("task");
+    emit CEduPro::app()->signStatusRightText("task");
+}
+
+void CCenterWnd::btnClicked(CImgButton* sendBtn)
+{ 
     for (const auto& btn : menuBtns_)
     {
-        auto senderObj = dynamic_cast<CImgButton*>(sender());
-        if (btn != senderObj) 
-            btn->slotSetUnClicked();   
+        if (btn != sendBtn) 
+            btn->slotSetUnClicked();
     }
 }
-
-

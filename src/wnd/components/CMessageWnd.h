@@ -167,16 +167,14 @@ public:
 
     CMultiMessageWnd(size_t id,QString text, QVector<QString> rgbColor, QString role,QWidget *parent = nullptr): QFrame(parent),id_(id)
     {       
-        //设置背景图片.有人类和机器人两种FEFFEE
-        // QString icon;
+        
         setStyleSheet(QString("background-color:%1;border-radius: 10px;color:%2;").arg(rgbColor[0],rgbColor[1]));
         text_ = text;
         //设置文本label 设置字体大小，可换行
         textLabel_ = new QLabel(text, this);
         textLabel_->setTextInteractionFlags(textLabel_->textInteractionFlags() | Qt::TextSelectableByMouse);
         QFont font("微软雅黑", 13);
-        textLabel_->setFont(font);
-        
+        textLabel_->setFont(font);        
         textLabel_->setWordWrap(true);
 
         //设置关闭图片按钮
@@ -198,10 +196,7 @@ public:
         titleLayout->addStretch();
         titleLayout->addWidget(isShow_);
         titleLayout->addWidget(isSave_);
-        titleLayout->addWidget(closeBtn);
-        
-        //根据QStringList roleNames的个数建立可选择的按钮
-        
+        titleLayout->addWidget(closeBtn);    
            
         
         layout->addLayout(titleLayout);
@@ -212,7 +207,7 @@ public:
         connect(isShow_, &QCheckBox::clicked, this, &CMultiMessageWnd::signChange);
         connect(isSave_, &QCheckBox::clicked, this, &CMultiMessageWnd::signChange);
         //关闭窗口时发送id
-        connect(closeBtn, &QPushButton::clicked, this, &CMultiMessageWnd::signChange);
+        connect(closeBtn, &QPushButton::clicked, [this](){ isShow_->setChecked(false); emit signChange();});
         //关闭窗口
         connect(closeBtn, &QPushButton::clicked, this, &CMessageWnd::close);
     }
@@ -240,7 +235,7 @@ public:
     explicit CInputGptRoleWndg(QWidget *parent = nullptr)
     {
         roleNameLineEdit = new QLineEdit(this);
-        descriptionLineEdit = new QTextEdit(this);
+        systemPormpt = new QTextEdit(this);
         tempLineEdit = new QLineEdit(this);       
         buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
         asisstant = new QRadioButton("使用助手", this);
@@ -255,7 +250,7 @@ public:
         layout1->addWidget(tempLineEdit);
         // layout->addRow(label, roleNameLineEdit,radioButton);
         layout->addRow(layout1);
-        layout->addRow("系统命令:", descriptionLineEdit);
+        layout->addRow("系统命令:", systemPormpt);
         // layout->addRow("活跃度:", tempLineEdit);
         layout->addWidget(buttonBox);
         // setFixedWidth(450);
@@ -265,7 +260,7 @@ public:
     }
 
     QLineEdit *roleNameLineEdit;
-    QTextEdit *descriptionLineEdit;
+    QTextEdit *systemPormpt;
     QLineEdit *tempLineEdit;
     QRadioButton *asisstant;
     QDialogButtonBox *buttonBox;

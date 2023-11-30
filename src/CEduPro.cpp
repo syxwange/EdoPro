@@ -6,21 +6,56 @@
 #include <QJsonObject>
 #include <QSettings>
 #include <ranges>
+#include <QFile>
+
 
 namespace  views = std::ranges::views ;
 
-CEduPro::CEduPro():win_(CMainWnd::getInstance()),openai_(new COpenAI)
+/*
+    "usage": {
+        "prompt_tokens": 9,
+        "completion_tokens": 12,
+        "total_tokens": 21
+      }
+
+      {
+  "id": "chatcmpl-8QX8v3utgc1lQlYHvuqtb0RG2AoA9",
+  "object": "chat.completion",
+  "created": 1701334621,
+  "model": "gpt-3.5-turbo-1106",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Hello! How can I assist you today?"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 37,
+    "completion_tokens": 9,
+    "total_tokens": 46
+  },
+  "system_fingerprint": "fp_eeff13170a"
+}
+
+*/
+
+CEduPro::CEduPro():openai_(new COpenAI)
 {
     init();
-    connectSignals();
+    connect(openai_,&COpenAI::sigOaiReply,this,&CEduPro::slotOaiReply);
 }
 
 void CEduPro::show()
 {
+    win_ = new CMainWnd;
     win_->show();
 }
 
-void CEduPro::slotGetDataForWnd(const QString &name)
+QStringList CEduPro::getDataForWnd(const QString &name)
 {
     if (name=="video") 
         messages_.clear();
@@ -40,7 +75,7 @@ void CEduPro::slotGetDataForWnd(const QString &name)
         settings.endGroup();
     }
     settings.endGroup();
-    emit win_->signDataForWnd(currentTheme_, childGroups);
+    return childGroups;
 }
 
 QByteArray CEduPro::createOiaMessage(const QString &roleName, const QString &modelName, const QString &userPrompt)
@@ -58,41 +93,92 @@ QByteArray CEduPro::createOiaMessage(const QString &roleName, const QString &mod
 
 void CEduPro::slotOaiReply(const QString &text,int statusCode)
 {
+    
     if (statusCode!=200)
     {
-        emit win_->signStatusText(QString::number(statusCode)+": "+text);
-        emit win_->signMultiOaiReply(messages_);
-        qDebug()<<statusCode<<text;
+        QString errorText = QString::number(statusCode)+": "+text;
+        emit signStatusText(errorText.replace("\n","").left(130));
+        emit signMultiOaiReply();     
         return;
     }
     auto root =  QJsonDocument::fromJson(text.toUtf8()).object();
-	auto content = root["choices"][0]["message"]["content"].toString();
-    size_t id = 1;
-    if (currentTheme_=="video")
-    {          
-        UMesaage message;
-        message.index = messages_.size();
-        message.isSave = false;
-        message.isShow = true;        
-        message.content = content;
-        message.owner = currentRole_; 
-        messages_.push_back(message);  
-          
-        emit win_->signMultiOaiReply(messages_);
-    }else if(currentTheme_=="gpts")
-        emit win_->signOaiReply(content,id);
-    emit win_->signStatusText(currentRole_+" : OK");
+	auto content = root["choices"][0]["message"]["content"].toString(); 
+    if (root["model"].toString().contains("gpt-4")){ 
+        money_+= root["usage"].toObject()["prompt_tokens"].toInt()*0.00001;   
+        money_ += root["usage"].toObject()["completion_tokens"].toInt()*0.00003; 
+    }
+    else{
+        money_+= root["usage"].toObject()["prompt_tokens"].toInt()*0.000001;   
+        money_ += root["usage"].toObject()["completion_tokens"].toInt()*0.000002; 
+    }     
+    UMesaage message;
+    message.index = messages_.size();
+    message.isSave = false;
+    message.isShow = true;        
+    message.content = content;
+    message.owner = currentRole_; 
+    messages_.push_back(message);  
+        
+    emit signMultiOaiReply();    
+    emit signStatusText(currentRole_+" : OK");
+    emit signStatusRightText("金额："+QString::number(money_,'f',4)+"美元");
 }
 
-void CEduPro::slotMultiAskGpt(QVector<UMesaage>& messages)
-{  
-    messages_=messages;
+void CEduPro::multiAskGpt()
+{     
     QString text{};
-    currentRole_ = messages.last().receiver;
-    for (auto& message:messages|views::filter([&](auto i){return i.isShow;})) 
+    currentRole_ = messages_.last().receiver;
+    for (auto& message:messages_|views::filter([&](auto i){return i.isShow;})) 
         text+=message.content+"\n"; 
-    auto gptMessage = createOiaMessage(currentRole_, messages.last().model, text);  
+    auto gptMessage = createOiaMessage(currentRole_, messages_.last().model, text);  
     openai_->chat(gptMessage);
+}
+
+void CEduPro::delRole(const QString &name)
+{
+    QSettings settings("config.ini",QSettings::IniFormat);
+    settings.remove(currentTheme_+"/"+name);
+}
+
+void CEduPro::saveMsgAsJson(const QString& fileName)
+{
+    QJsonArray jsonArray;
+    for (auto& message:messages_|views::filter([&](auto i){return i.isSave;}))
+    {
+        QJsonObject json;
+        json["index"] = int(message.index);
+        json["owner"] = message.owner;
+        json["receiver"] = message.receiver;
+        json["content"] = message.content;
+        jsonArray.append(json);
+    }
+    QJsonDocument jsonDoc(jsonArray);
+    QFile file(fileName);
+    if (file.open(QFile::WriteOnly)) {
+        file.write(jsonDoc.toJson());
+    }
+    emit signStatusText("保存成功");
+}
+
+void CEduPro::loadMsgFromJson(const QString &fileName)
+{
+    //从fileName中读入文件，并转化为json,放到messages_变量中   
+    QFile file(fileName);
+     if (file.open(QFile::ReadOnly)) {
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(file.readAll());
+        QJsonArray jsonArray = jsonDoc.array();
+        for (const QJsonValue& value : jsonArray) {
+            auto tempJson =  value.toObject();
+            UMesaage message;
+            message.index = tempJson["index"].toInt();
+            message.owner = tempJson["owner"].toString();
+            message.receiver = tempJson["receiver"].toString();
+            message.content = tempJson["content"].toString();
+            message.isSave = true;
+            message.isShow = true;
+            messages_.push_back(message);
+        }
+    }
 }
 
 void CEduPro::slotAskGpt(const QString &roleName, const QString &modelName, const QString &userPrompt)
@@ -102,10 +188,10 @@ void CEduPro::slotAskGpt(const QString &roleName, const QString &modelName, cons
     openai_->chat(message);      
 }
 
-
-
-void CEduPro::slotAddRole(const QString &name, const QString &systemPrompt, const QString &temperature, bool isAssistant)
+void CEduPro::saveRole(const QString &name, const QString &systemPrompt, const QString &temperature)
 {
+    rolesInfo_[name]=QStringList {systemPrompt,temperature};
+
     QSettings settings("config.ini",QSettings::IniFormat);
     settings.beginGroup(currentTheme_);
     settings.beginGroup(name);
@@ -114,25 +200,7 @@ void CEduPro::slotAddRole(const QString &name, const QString &systemPrompt, cons
     settings.setValue("temperature",temperature);
 
     settings.endGroup();  // end "math" group
-    settings.endGroup();
-    QStringList temp{};
-    temp.append(systemPrompt);
-    temp.append(temperature);
-    rolesInfo_[name]=temp;
-}
-
-
-
-void CEduPro::connectSignals()
-{
-    connect(win_,&CMainWnd::signAskGpt,this,&CEduPro::slotAskGpt);
-    connect(win_,&CMainWnd::signAddRole,this,&CEduPro::slotAddRole);
-    connect(win_,&CMainWnd::signCreateWnd,this,&CEduPro::slotGetDataForWnd);
-    connect(win_,&CMainWnd::signMultiAskGpt,this,&CEduPro::slotMultiAskGpt);
-    connect(win_,&CMainWnd::signGetRoleInfo,[this](const QString& roleName){ win_->signReplyForWnd(roleName,rolesInfo_[roleName]);});
-
-    connect(openai_,&COpenAI::sigOaiReply,this,&CEduPro::slotOaiReply);
-   
+    settings.endGroup();      
 }
 
 void CEduPro::init() 
@@ -161,6 +229,4 @@ void CEduPro::init()
         settings.endGroup();
     }
     settings.endGroup();
-    win_->signDataForWnd(currentTheme_, childGroups);
-    emit win_->signStatusText(currentRole_+" : OK");
 }

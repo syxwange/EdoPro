@@ -33,7 +33,7 @@ public:
      * 
      * @param name 窗口的名称。
      */
-    QStringList getDataForWnd(const QString& name);
+    void slotGetDataForWnd(const QString& name);
 
     /**
      * @brief Handles the slot for asking GPT.
@@ -55,28 +55,16 @@ public:
      * @param temperature 温度
      * @param isAssistant 是否是助手
      */
-    void saveRole(const QString& name,const QString& systemPrompt,const QString& temperature);
+    void slotAddRole(const QString& name,const QString& systemPrompt,const QString& temperature,bool isAssistant);
 
-    void multiAskGpt();  
+    void slotMultiAskGpt(QVector<UMesaage>& messages);
 
-    void delRole(const QString& name);
-
-    void saveMsgAsJson(const QString& fileName="autoSave.json");
-
-    /// @brief 
-    /// @param fileName 
-    void loadMsgFromJson(const QString& fileName="autoSave.json");
+  
 
 signals:   
-    void signMultiOaiReply();
-    void signStatusText(const QString& text);
-    void signOaiReply(const QString& text);
-    void signStatusRightText(const QString& text);
     
 public:
     QVector<UMesaage> messages_{};
-    std::map<QString, QStringList> rolesInfo_{};
-    QString currentTheme_{"gpts"}; 
 
 private:
 
@@ -96,10 +84,13 @@ private:
     void init() ;
 
     CMainWnd * win_;
-    COpenAI * openai_;    
-    std::map<QString,QString> modelsName_{}; 
-    QString currentRole_{};
-    float money_{0}; 
+    COpenAI * openai_;
+    std::map<QString, QStringList> rolesInfo_{};
+    std::map<QString,QString> modelsName_{};
+    
+    std::vector<int> messageIndex_{};
+    QString currentRole_{"man"};
+    QString currentTheme_{"gpts"}; 
 };
 
 #endif

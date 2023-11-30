@@ -7,8 +7,8 @@ CStatusWnd::CStatusWnd(QWidget * parent):QFrame(parent)
     leftLabel_ = new QLabel(this);
     rightLabel_ = new QLabel(this);
     
-    setLeftText("this is test");
-    setRightText("gptTEST");    
+    setLeftText("");
+    setRightText("gpts");    
     QHBoxLayout *layout = new QHBoxLayout(this);
     layout->addWidget(leftLabel_);
     layout->addStretch();

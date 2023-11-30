@@ -7,6 +7,7 @@ class QVBoxLayout;
 class QHBoxLayout;
 class CImgButton;
 class QTextEdit;
+class QScrollArea;
 
 #include <QSplitter>
 #include <QKeyEvent>
@@ -22,30 +23,22 @@ public:
     CMultiGptWnd(QWidget *parent = nullptr,Qt::Orientation orientation = Qt::Horizontal);
     ~CMultiGptWnd();
 
-    void slotEditRole(const QString& name,QStringList roleInfo);
-    void slotMultiOaiReply(QVector<UMesaage>&);
-    void slotReset(const QStringList& rolesName);
-
-signals:
-    void signAddRole(const QString& name,const QString& systemPrompt,const QString& temperature,bool isAssistant);
-    void signAskGpt(const QString& roleName,const QString& modelName,const QString& userPrompt);
-    void signShowSaveMessage();
-    void signMultiAskGpt(QVector<UMesaage>& messages);
-    void signGetRoleInfo(QString roleName);
-    void signDelRole(QString roleName);
+    void slotMultiOaiReply();
+    void initRoleBtn(const QString& );
 
 private:
     void addModels(const QStringList& models);
-    void addRoleBtn();
+    void addRole(const QString & name={},const QStringList& info={},bool isEdit=false);
     void askBtnClicked();
-    void createGptRole(const QString &text);
-    void roleBtnClicked();
+    void createRoleBtn(const QString &text);
+    void createModelBtn(const QString &text);
+    void saveMessage();
     void addFile();
+    void showMessage();
 
     void modelBtnClicked();
-    void createModelBtn(const QString &text);
+    void roleBtnClicked();    
     void messageWndClicked();
-
     void roleBtnDelClicked();
     void roleBtnEditClicked();
 
@@ -53,6 +46,7 @@ private:
     QVBoxLayout *scrollLayout_;
     QVBoxLayout *gtpsLayout_;
     QHBoxLayout *modelsLayout_;
+    QScrollArea * scrollArea_;
    
     QString roleName_{};
     QString modelName_{};
@@ -61,11 +55,10 @@ private:
     std::vector<QPushButton*> modelBtns_;
     QVector<CMultiMessageWnd*> messageWnds_;
     QPushButton* askBtn_{};
-    QTextEdit* textEdit_{};
-    bool isChatLive_ = false;
-    QVector<QStringList> colors_{{"#fbffef","black","#02114d"},{"#fbffef","black","#02114d"},{"#fbffef","black","#02114d"}};
-    QVector<UMesaage> messages_{};
-    QMap<QString,QStringList> mapColors_{{"man",colors_[0]}};
+    QTextEdit* textEdit_{}; 
+    QVector<QStringList> colors_{{"#F3FFEE","black","#02114d"},{"#eaf6fd","#0b0121","#02114d"},{"#fffaf3","#160d00","#02114d"},{"#f5eefd","#181c25","#02114d"},{"#eef0fe","#020830","#02114d"}};
+
+    QMap<QString,QStringList> mapColors_{{"man",{"#fbffef","black","#02114d"}}};
 
 };
 

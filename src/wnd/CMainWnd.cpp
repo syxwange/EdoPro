@@ -4,6 +4,7 @@
 #include "components/CTitileWnd.h"
 #include "components/CStatusWnd.h"
 #include "components/CCenterWnd.h"
+#include "../CEduPro.h"
 
 CMainWnd::CMainWnd(QWidget * parent):CMoveFramelessWnd(parent),
     statusWnd_(new CStatusWnd(this)),centerWnd_(new CCenterWnd(this)),titleWnd_(new CTitileWnd(this))
@@ -21,21 +22,11 @@ CMainWnd::CMainWnd(QWidget * parent):CMoveFramelessWnd(parent),
     layout->addWidget(statusWnd_);
     layout->setStretch(1,1);
 
-
     resize(900,1000);
     connect(titleWnd_,&CTitileWnd::signCloseWnd,this,&CMainWnd::close);
     connect(titleWnd_,&CTitileWnd::signMinWnd,this,&CMainWnd::showMinimized);
-
-    connect(this,&CMainWnd::signDataForWnd,centerWnd_,&CCenterWnd::slotCreateWnd);
-    connect(this,&CMainWnd::signStatusText,statusWnd_,&CStatusWnd::setLeftText);
-  
+    connect(CEduPro::app(),&CEduPro::signStatusText,statusWnd_,&CStatusWnd::setLeftText);  
+    connect(CEduPro::app(),&CEduPro::signStatusRightText,statusWnd_,&CStatusWnd::setRightText);  
 
 }
-
-CMainWnd *CMainWnd::getInstance()
-{
-    static CMainWnd instance =  CMainWnd();
-    return &instance;
-}
-
 
