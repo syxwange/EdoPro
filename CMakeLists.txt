@@ -1,6 +1,6 @@
 
-# cmake_minimum_required(VERSION 3.26.0)
-# project(aaa VERSION 0.1 LANGUAGES CXX)
-add_subdirectory(src)
+
 add_subdirectory(test)
+# add_subdirectory(EduPro)
 add_subdirectory(translate)
+add_subdirectory(msTTS)

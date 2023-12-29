@@ -6,6 +6,8 @@
 #include <QString>
 #include <QObject>
 #include <QJsonObject>
+#include "../core/CMysql.h"
+
 
 class QNetworkReply;
 class QNetworkAccessManager;
@@ -28,29 +30,30 @@ class COpenAI final :public QObject
 {
 	Q_OBJECT
 
-	public:
-		COpenAI(const QString& baseUrl="http://47.252.69.252:8866/v1", const QString&  apiKey="Bearer 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", QObject *parent = nullptr);
-		~COpenAI(){}
-		COpenAI(const COpenAI&,QObject *parent = nullptr) = delete;
-		COpenAI(COpenAI&&,QObject *parent = nullptr) = delete;
+public:
+	COpenAI(const QString& baseUrl="http://47.252.69.252:8866/v1", const QString&  apiKey="sk-test", QObject *parent = nullptr);
+	~COpenAI(){}
+	COpenAI(const COpenAI&,QObject *parent = nullptr) = delete;
+	COpenAI(COpenAI&&,QObject *parent = nullptr) = delete;
+	COpenAI& operator=(const COpenAI&) = delete;
+	COpenAI& operator=(COpenAI&&) = delete;
 
-		COpenAI& operator=(const COpenAI&) = delete;
-		COpenAI& operator=(COpenAI&&) = delete;
+	void  send(const QByteArray& jsonBody,const QString& url) const & noexcept(false);
+	void slotResponse(QNetworkReply *reply);
+	void chat(const QByteArray& jsonBody) const & noexcept(false);
+	void youdao(const QString& word)  noexcept(false);
 
-		void  send(const QByteArray& jsonBody,const QString& url) const & noexcept(false);
+signals:
+	void sigOaiReply(const QString& res);
+private:
+	UWord getWord(const QString& htmltext);
+	void setWordChange(UWord& wordTemp,const QString& text);
 
-		void slotResponse(QNetworkReply *reply);
-
-		void chat(const QByteArray& jsonBody) const & noexcept(false);
-		void youdao(const QString& word) const & noexcept(false);
-
-	signals:
-		void sigOaiReply(const QString& res);
-
-	private:
-		QNetworkAccessManager * networkManager_ =  nullptr;	
-		QString baseUrl_;	
-		QString apiKey_;
-		QJsonObject jsonBody_;
+private:
+	QNetworkAccessManager * networkManager_ =  nullptr;	
+	QString baseUrl_;	
+	QString apiKey_;
+	QJsonObject jsonBody_;
+	QString word_{};
 
 };

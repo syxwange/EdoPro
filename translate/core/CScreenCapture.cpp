@@ -87,5 +87,5 @@ QString CScreenCapture::img2text(QPixmap pixmap)
         }
         index = text.indexOf('\n', index + 1);
     }  
-    return text;
+    return text.trimmed();
 }

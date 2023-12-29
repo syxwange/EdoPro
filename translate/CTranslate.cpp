@@ -8,13 +8,13 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QVBoxLayout>
-#include "core/CMessageWnd.h"
+#include <QLabel>
+
 
 
 CTranslate::CTranslate(QWidget *parent):CMoveFramelessWnd(parent),openai_(new COpenAI),pScreenCapture_(new CScreenCapture)
 {
-    layout_ = new QVBoxLayout(this);
-    layout_->addStretch();
+    layout_ = new QVBoxLayout(this);  
     setSystray();
     setFixedWidth(600);
     setWindowOpacity(0.8);
@@ -32,9 +32,14 @@ void CTranslate::slotPictureText(const QString &text)
     if (text.size()<3)
         return;
     show();
-    auto wnd = new CMessageWnd(0, "👨 "+text, CMessageWnd::MAN);
-    wnd->setMouseTracking(true); 
-    layout_->insertWidget(layout_->count()-1, wnd);
+    auto wnd =new QLabel(text,this);
+    wnd->setWordWrap(true);
+    wnd->setTextInteractionFlags(wnd->textInteractionFlags() | Qt::TextSelectableByMouse);
+    QFont font("微软雅黑", 13);
+    wnd->setStyleSheet("QLabel { color : #160d00; background-color : #F3FFEE;}");
+    wnd->setFont(font); 
+    wnd->setContentsMargins(10, 5, 10, 5);
+    layout_->addWidget(wnd);
     messageWnds_.push_back(wnd); 
     if (text.split(" ").size() <3)
     {
@@ -66,10 +71,17 @@ void CTranslate::activeScreen()
 
 void CTranslate::slotOaiReply(const QString &text)
 {
-    auto wnd = new CMessageWnd(0, "🤖 "+text, CMessageWnd::ROBOT); 
-    wnd->setMouseTracking(true); 
-    layout_->insertWidget(layout_->count()-1, wnd);
+
+    auto wnd =new QLabel(text,this);
+    wnd->setWordWrap(true);
+    wnd->setTextInteractionFlags(wnd->textInteractionFlags() | Qt::TextSelectableByMouse);
+    QFont font("微软雅黑", 13);
+    wnd->setStyleSheet("QLabel { color : #02114d; background-color : #e7fbe5;}");
+    wnd->setFont(font);    
+    layout_->addWidget(wnd);
+    wnd->setContentsMargins(10, 5, 10, 5);
     messageWnds_.push_back(wnd); 
+    adjustSize();
 }
 
 void CTranslate::setSystray()

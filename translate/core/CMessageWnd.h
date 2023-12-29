@@ -109,7 +109,7 @@ public:
         layout->addWidget(textLabel);
        
 
-        setLayout(layout);
+        // setLayout(layout);
 
         //关闭窗口时发送id
         // connect(closeBtn, &QPushButton::clicked, [this](){emit signDelMessageId(id_); });

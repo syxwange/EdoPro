@@ -8,9 +8,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 
-find_package(Qt6 COMPONENTS Widgets Network REQUIRED) # Qt COMPONENTS
+find_package(Qt6 COMPONENTS Widgets Network Xml Sql REQUIRED) # Qt COMPONENTS
 
 include_directories(D:/javaAndApp/vcpkg/installed/x64-windows/include)
+
+include_directories(../include)
 
 file(GLOB SRCS  *.cpp *.h)
 file(GLOB_RECURSE WNDSRCS wnd/*.cpp wnd/*.h)
@@ -32,8 +34,9 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 target_link_directories(${PROJECT_NAME} PRIVATE D:/javaAndApp/vcpkg/installed/x64-windows/lib)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets  Qt6::Network
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets  Qt6::Network Qt6::Xml Qt6::Sql
     tesseract53.lib
+    ${CMAKE_SOURCE_DIR}/lib64/vs14/debug/mysqlcppconn.lib
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

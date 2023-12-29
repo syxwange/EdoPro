@@ -8,6 +8,7 @@
 class CScreenCapture;
 class QVBoxLayout;
 class CMessageWnd;
+class QLabel;
 #include "core/CMoveFramelessWnd.h"
 #include <vector>
 
@@ -33,7 +34,8 @@ private:
     CScreenCapture *pScreenCapture_;
     bool isSHide_{false};
     QVBoxLayout *layout_;
-    std::vector<CMessageWnd*> messageWnds_;
+    std::vector<QLabel*> messageWnds_;
+    
 
 };
 
